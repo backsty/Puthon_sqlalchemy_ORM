@@ -4,7 +4,7 @@ import json
 from models import Publisher, Book, Shop, Stock, Sale
 
 
-DSN = "postgresql://postgres:пароль@localhost:5432/testORM_db"
+DSN = "postgresql://postgres:Pro23242pro@localhost:5432/testORM_db"
 engine = sq.create_engine(DSN)
 
 Session = sessionmaker(bind=engine)
@@ -26,6 +26,7 @@ def load_publisher_from_json():
 
 
 def info_sale():
+    """1 вариант реализации выборки!"""
     publishers = load_publisher_from_json()
     print("Доступные id и имена издателей -> ")
     for id in range(1, 5):
@@ -66,8 +67,29 @@ def info_sale():
             date_sale = item['date_sale']
             print(title.ljust(20) + '|' + shop_name.ljust(15) + '|' + str(price).ljust(10) + '|' + (date_sale).strftime('%m/%d/%Y').ljust(30))
 
-# print(load_publisher_from_json())
-info_sale()
+
+def get_shops(input_name_or_id):
+    """2 вариант реализации выборки!"""
+    query = session.query(Book.title, Shop.name, Sale.price, Sale.count, Sale.date_sale)\
+        .select_from(Book)\
+        .join(Stock, Book.id == Stock.id_book)\
+        .join(Sale, Stock.id == Sale.id_stock)\
+        .join(Publisher, Book.id_publisher == Publisher.id)
+    if input_name_or_id.isdigit():
+        query_ = query.filter(Publisher.id == input_name_or_id)
+    else:
+        query_ = query.filter(Publisher.name == input_name_or_id)
+    query_result = query_.all()
+    for title, name, price, count, date_sale in query_result:
+        print(title.ljust(20) + '|' + name.ljust(15) + '|' + str(price).ljust(10) + '|' + (date_sale).strftime('%m/%d/%Y').ljust(30))
+
+
+if __name__ == '__main__':
+    input_name_or_id = input("Введите id или name одного из издателей: ")
+    get_shops(input_name_or_id)
+    print(load_publisher_from_json())
+    info_sale()
+
 session.close()
 
 
